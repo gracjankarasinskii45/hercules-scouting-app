@@ -3,217 +3,191 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime
+import os
+import base64
 
 # Konfiguracja strony
 st.set_page_config(
-    page_title="HÉRCULES DE ALICANTE C.F. | Scouting Portal",
+    page_title="HÉRCULES DE ALICANTE C.F. | Scouting Engine Portal",
     page_icon="⚽",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- STYLIZACJA CSS (OFICJALNY PORTAL HÉRCULES CF) ---
-st.markdown("""
-    <style>
-    /* Główna paleta barw Hércules C.F.: Granat (#001b44), Błękit (#0055ff), Złoto (#d4af37), Biel (#f8fafc) */
-    .stApp {
-        background-color: #080d1a;
-        color: #1e293b;
-    }
-    
-    /* Górny Belka Klubowa */
-    .club-header {
-        background: linear-gradient(90deg, #020b1e 0%, #002255 50%, #020b1e 100%);
-        padding: 15px 30px;
-        border-bottom: 3px solid #d4af37;
-        margin: -60px -50px 25px -50px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    }
-    
-    .club-title {
-        color: #ffffff;
-        font-family: 'Helvetica Neue', Arial, sans-serif;
-        font-weight: 900;
-        letter-spacing: 2px;
-        margin: 0;
-        font-size: 22px;
-        text-transform: uppercase;
-    }
-    
-    /* Ekran Powitalny / Hero Section */
-    .hero-container {
-        text-align: center;
-        padding: 40px 20px;
-        background: radial-gradient(circle, rgba(0,56,130,0.4) 0%, rgba(8,13,26,0.95) 70%);
-        border-radius: 20px;
-        border: 1px solid rgba(212, 175, 55, 0.3);
-        margin: 20px auto;
-        max-width: 850px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    }
-    
-    .hero-logo {
-        width: 140px;
-        margin-bottom: 20px;
-        filter: drop-shadow(0px 8px 16px rgba(0,0,0,0.7));
-    }
-    
-    .hero-heading {
-        color: #ffffff;
-        font-size: 32px;
-        font-weight: 800;
-        letter-spacing: 1.5px;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-    }
-    
-    .hero-sub {
-        color: #94a3b8;
-        font-size: 16px;
-        margin-bottom: 25px;
-    }
+# Ładowanie logo z pliku lokalnego lub domyślnego URL
+def load_logo_b64(file_path="logo.png"):
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            data = f.read()
+            return f"data:image/png;base64,{base64.b64encode(data).decode()}"
+    return "https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Hercules_CF_logo.svg/1200px-Hercules_CF_logo.svg.png"
 
-    /* Karty Treści w Stylu Artykułów / Portalowym */
-    .content-card {
+logo_src = load_logo_b64("logo.png")
+
+# --- STYLIZACJA CSS ---
+st.markdown(f"""
+    <style>
+    .stApp {{
+        background-color: #060a12;
+        color: #f8fafc;
+    }}
+    .hero-container {{
+        text-align: center;
+        padding: 45px 25px;
+        background: radial-gradient(circle, rgba(0,56,130,0.5) 0%, rgba(6,10,18,0.98) 80%);
+        border-radius: 20px;
+        border: 2px solid #d4af37;
+        margin: 20px auto;
+        max-width: 820px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.8);
+    }}
+    .hero-logo {{
+        width: 160px;
+        height: auto;
+        margin-bottom: 20px;
+        filter: drop-shadow(0px 8px 18px rgba(0,0,0,0.9));
+    }}
+    .content-card {{
         background-color: #ffffff;
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 28px;
         color: #0f172a;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        box-shadow: 0 6px 25px rgba(0,0,0,0.5);
         margin-bottom: 25px;
-        border-top: 4px solid #003882;
-    }
-    
-    .content-card h1, .content-card h2, .content-card h3 {
-        color: #002255 !important;
+        border-top: 6px solid #003882;
+    }}
+    .content-card h1, .content-card h2, .content-card h3 {{
+        color: #001f4d !important;
         font-weight: 800;
-    }
-
-    /* Karta Zawodnika (Player Card) */
-    .player-card-result {
+    }}
+    .pillar-box {{
+        background-color: #f1f5f9;
+        border-left: 4px solid #0055ff;
+        padding: 14px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+    }}
+    .player-card-result {{
         background: linear-gradient(135deg, #001f4d 0%, #000c24 100%);
         border: 2px solid #d4af37;
         border-radius: 16px;
-        padding: 25px;
+        padding: 28px;
         color: #ffffff;
         margin-top: 20px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-    }
-    
-    .badge-tag {
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }}
+    .badge-auto {{
+        display: inline-block;
+        background-color: #d4af37;
+        color: #000c24;
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 12px;
+        margin: 3px;
+        font-weight: 800;
+    }}
+    .badge-manual {{
         display: inline-block;
         background-color: #003882;
         color: #ffffff;
-        padding: 5px 14px;
+        padding: 5px 12px;
         border-radius: 15px;
-        font-size: 13px;
-        margin: 4px;
-        border: 1px solid #d4af37;
+        font-size: 12px;
+        margin: 3px;
+        border: 1px solid #60a5fa;
         font-weight: 600;
-    }
-    
-    /* Modyfikacja paska Streamlit */
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
+    }}
+    header {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
     </style>
 """, unsafe_allow_html=True)
 
-# URL Logo Hércules CF
-HERCULES_LOGO_URL = "https://upload.wikimedia.org/wikipedia/en/thumb/0/02/Hercules_CF_logo.svg/1200px-Hercules_CF_logo.svg.png"
-
-# --- SILNIK POZYCYJNY & UMIEJĘTNOŚCI (1-10) ---
-POSITION_ENGINE = {
+# --- PEŁNY MATEMATYCZNY SILNIK POZYCYJNY (4 FILARY) ---
+POSITION_FULL_ENGINE = {
     "CB - Środkowy Obrońca": {
-        "skills": ["Gra w powietrzu / Główki", "Pojedynki 1v1 defensywne", "Ustawianie się / Asekuracja", "Wprowadzanie piłki / Podanie", "Szybkość na krótkim dystansie", "Decyzyjność pod presją"],
+        "pillars": {
+            "Technika (TE)": ["Wprowadzanie piłki", "Kultura podania krótkiego", "Podanie diagonalne / Długie"],
+            "Taktyka (TA)": ["Ustawianie się w linii", "Asekuracja i profilowanie", "Decyzyjność pod presją"],
+            "Motoryka (MO)": ["Gra w powietrzu / Główki", "Pojedynki 1v1 defensywne", "Szybkość i przyspieszenie"],
+            "Mentalność (ME)": ["Komunikacja i dowodzenie", "Agresja pozytywna", "Koncentracja 90 min"]
+        },
         "profiles": {
-            "Ball-Playing Defender": {"Wprowadzanie piłki / Podanie": 0.4, "Decyzyjność pod presją": 0.3, "Ustawianie się / Asekuracja": 0.3},
-            "Stopper Agresywny": {"Pojedynki 1v1 defensywne": 0.4, "Gra w powietrzu / Główki": 0.4, "Szybkość na krótkim dystansie": 0.2},
-            "Covering Defender (Asekurujący)": {"Ustawianie się / Asekuracja": 0.4, "Szybkość na krótkim dystansie": 0.4, "Decyzyjność pod presją": 0.2}
+            "Ball-Playing Defender": {"Wprowadzanie piłki": 0.25, "Kultura podania krótkiego": 0.25, "Decyzyjność pod presją": 0.25, "Podanie diagonalne / Długie": 0.25},
+            "Stopper Agresywny": {"Pojedynki 1v1 defensywne": 0.35, "Gra w powietrzu / Główki": 0.35, "Agresja pozytywna": 0.30},
+            "Covering Defender (Asekurujący)": {"Ustawianie się w linii": 0.35, "Asekuracja i profilowanie": 0.35, "Szybkość i przyspieszenie": 0.30}
         }
     },
     "CM - Środkowy Pomocnik": {
-        "skills": ["Przegląd pola i wizja", "Kultura podania (krótkie/długie)", "Odbiór i pressing", "Odporność na pressing", "Wydolność / Mobilność", "Decyzyjność i czas reakcji"],
+        "pillars": {
+            "Technika (TE)": ["Przyjęcie kierunkowe", "Kultura podania", "Utrzymanie się przy piłce"],
+            "Taktyka (TA)": ["Przegląd pola i wizja", "Świadomość przestrzenna (Scanning)", "Reakcja po stracie (Skan)"],
+            "Motoryka (MO)": ["Wydolność / Mobilność", "Dynamiczne wyjście na pozycję", "Zwrotność"],
+            "Mentalność (ME)": ["Odporność na presję", "Lider środka pola", "Zabijanie tempa / Przyspieszanie"]
+        },
         "profiles": {
-            "Deep-Lying Playmaker": {"Kultura podania (krótkie/długie)": 0.4, "Przegląd pola i wizja": 0.4, "Odporność na pressing": 0.2},
-            "Box-to-Box": {"Wydolność / Mobilność": 0.4, "Odbiór i pressing": 0.3, "Decyzyjność i czas reakcji": 0.3},
-            "Advanced Playmaker": {"Przegląd pola i wizja": 0.4, "Odporność na pressing": 0.3, "Kultura podania (krótkie/długie)": 0.3}
+            "Deep-Lying Playmaker": {"Przegląd pola i wizja": 0.3, "Kultura podania": 0.3, "Przyjęcie kierunkowe": 0.2, "Odporność na presję": 0.2},
+            "Box-to-Box": {"Wydolność / Mobilność": 0.35, "Dynamiczne wyjście na pozycję": 0.3, "Reakcja po stracie (Skan)": 0.35},
+            "Advanced Playmaker": {"Przegląd pola i wizja": 0.35, "Przyjęcie kierunkowe": 0.3, "Utrzymanie się przy piłce": 0.35}
         }
     },
     "W - Skrzydłowy": {
-        "skills": ["Pojedynki 1v1 (Drybling)", "Szybkość i przyspieszenie", "Dośrodkowanie / Dogranie", "Wykończenie akcji", "Praca w defensywie", "Schodzenie do środka"],
+        "pillars": {
+            "Technika (TE)": ["Pojedynki 1v1 (Drybling)", "Dośrodkowanie z biegu", "Wykończenie akcji"],
+            "Taktyka (TA)": ["Ruch bez piłki / Wbieganie", "Schodzenie do środka (ECO)", "Decyzja: strzał vs podanie"],
+            "Motoryka (MO)": ["Przyspieszenie i V-max", "Zmiana kierunku biegu", "Eksplozywność"],
+            "Mentalność (ME)": ["Odwaga w pojedynkach", "Praca w powrocie (Def)", "Nieustępliwość"]
+        },
         "profiles": {
-            "Inverted Winger": {"Pojedynki 1v1 (Drybling)": 0.35, "Schodzenie do środka": 0.35, "Wykończenie akcji": 0.3},
-            "Classic Winger": {"Szybkość i przyspieszenie": 0.4, "Dośrodkowanie / Dogranie": 0.4, "Pojedynki 1v1 (Drybling)": 0.2},
-            "Wide Playmaker": {"Dośrodkowanie / Dogranie": 0.4, "Schodzenie do środka": 0.3, "Praca w defensywie": 0.3}
+            "Inverted Winger": {"Pojedynki 1v1 (Drybling)": 0.3, "Schodzenie do środka (ECO)": 0.35, "Wykończenie akcji": 0.35},
+            "Classic Winger": {"Przyspieszenie i V-max": 0.35, "Dośrodkowanie z biegu": 0.35, "Pojedynki 1v1 (Drybling)": 0.3},
+            "Wide Playmaker": {"Decyzja: strzał vs podanie": 0.35, "Ruch bez piłki / Wbieganie": 0.35, "Praca w powrocie (Def)": 0.3}
         }
     },
     "CF - Napastnik": {
-        "skills": ["Wykończenie 1v1 / Strzał", "Gra tyłem do bramki", "Ruch bez piłki / Asekuracja", "Gra głową w polu karnym", "Pressing i intensywność", "Szybkość wyjścia na pozycję"],
+        "pillars": {
+            "Technika (TE)": ["Strzał z pierwszej piłki", "Gra tyłem do bramki (Gra na ścianę)", "Wykończenie 1v1 z bramkarzem"],
+            "Taktyka (TA)": ["Ruch na wolną pozycję (Linia spalonego)", "Antycypacja w polu karnym", "Pressing na stoperów"],
+            "Motoryka (MO)": ["Skoczność i walka w powietrzu", "Start do piłki (Pierwsze 5m)", "Siła fizyczna / Osłona"],
+            "Mentalność (ME)": ["Instynkt strzelecki", "Pewność siebie pod bramką", "Work-rate w defensywie"]
+        },
         "profiles": {
-            "Target Man": {"Gra tyłem do bramki": 0.4, "Gra głową w polu karnym": 0.4, "Wykończenie 1v1 / Strzał": 0.2},
-            "Poacher (Lis pola karnego)": {"Wykończenie 1v1 / Strzał": 0.4, "Ruch bez piłki / Asekuracja": 0.4, "Szybkość wyjścia na pozycję": 0.2},
-            "Pressing Forward": {"Pressing i intensywność": 0.4, "Szybkość wyjścia na pozycję": 0.3, "Ruch bez piłki / Asekuracja": 0.3}
+            "Target Man": {"Gra tyłem do bramki (Gra na ścianę)": 0.35, "Siła fizyczna / Osłona": 0.35, "Skoczność i walka w powietrzu": 0.3},
+            "Poacher (Lis Pola Karnego)": {"Wykończenie 1v1 z bramkarzem": 0.35, "Antycypacja w polu karnym": 0.35, "Instynkt strzelecki": 0.3},
+            "Pressing Forward": {"Pressing na stoperów": 0.4, "Start do piłki (Pierwsze 5m)": 0.3, "Work-rate w defensywie": 0.3}
         }
     },
     "RB/LB - Boczny Obrońca": {
-        "skills": ["Szybkość i wytrzymałość", "Gra w defensywie 1v1", "Podłączenie się do ataku", "Dośrodkowanie z biegu", "Taktyczne powroty"],
+        "pillars": {
+            "Technika (TE)": ["Dośrodkowanie w pełnym biegu", "Podanie wzdłuż linii", "Odbiór czysty w 1v1"],
+            "Taktyka (TA)": ["Asekuracja skrzydła", "Timing podłączenia się", "Taktyczne złamanie do środka"],
+            "Motoryka (MO)": ["Wytrzymałość wahadłowa", "Szybkość w pojedynkach", "Zwrotność"],
+            "Mentalność (ME)": ["Dyscyplina taktyczna", "Zaangażowanie box-to-box", "Agresja w odbiorze"]
+        },
         "profiles": {
-            "Offensive Wingback": {"Podłączenie się do ataku": 0.4, "Dośrodkowanie z biegu": 0.35, "Szybkość i wytrzymałość": 0.25},
-            "Defensive Fullback": {"Gra w defensywie 1v1": 0.45, "Taktyczne powroty": 0.35, "Szybkość i wytrzymałość": 0.2}
+            "Offensive Wingback": {"Timing podłączenia się": 0.35, "Dośrodkowanie w pełnym biegu": 0.35, "Wytrzymałość wahadłowa": 0.3},
+            "Defensive Fullback": {"Odbiór czysty w 1v1": 0.4, "Asekuracja skrzydła": 0.35, "Dyscyplina taktyczna": 0.25}
         }
     },
     "GK - Bramkarz": {
-        "skills": ["Refleks na linii", "Wyjścia do dośrodkowań", "Gra nogami / Wprowadzenie", "Komunikacja i dowodzenie", "Gra w pojedynkach 1v1"],
+        "pillars": {
+            "Technika (TE)": ["Gra nogami (Rozegranie krótkie)", "Chwyt piłki / Parowanie", "Długie wprowadzenie nogą/ręką"],
+            "Taktyka (TA)": ["Ustawianie się na linii i przedpolu", "Czytanie prostopadłych podań", "Kierowanie defensywą"],
+            "Motoryka (MO)": ["Refleks i czas reakcji", "Zasięg w powietrzu (Dośrodkowania)", "Moc wyjścia w górę"],
+            "Mentalność (ME)": ["Charyzma i opanowanie", "Decyzyjność 1v1 z napastnikiem", "Odporność po błędzie"]
+        },
         "profiles": {
-            "Sweeper Keeper": {"Gra nogami / Wprowadzenie": 0.45, "Wyjścia do dośrodkowań": 0.3, "Refleks na linii": 0.25},
-            "Shot Stopper": {"Refleks na linii": 0.5, "Gra w pojedynkach 1v1": 0.3, "Komunikacja i dowodzenie": 0.2}
+            "Sweeper Keeper": {"Gra nogami (Rozegranie krótkie)": 0.4, "Czytanie prostopadłych podań": 0.35, "Charyzma i opanowanie": 0.25},
+            "Shot Stopper": {"Refleks i czas reakcji": 0.4, "Chwyt piłki / Parowanie": 0.35, "Ustawianie się na linii i przedpolu": 0.25}
         }
     }
 }
 
-AVAILABLE_BADGES = [
-    "⚡ Szybki / Dynamiczny", "🧠 Lider / Komunikatywny", "🛡️ Twardy w 1v1",
-    "🎯 Precyzyjna noga", "🔋 Końskie płuca", "🚀 Świetny w powietrzu",
-    "💎 Wysoka kultura gry", "🎯 Groźne stałe fragmenty", "⚠️ Wymaga pracy nad mentalem"
+TAGS_MANUAL = [
+    "🧠 Lider Zespołu", "💎 Wysoka Kultura Gry", "🔋 Końskie Płuca", 
+    "🎯 Groźny przy SFP", "⚠️ Podatny na stres", "⚠️ Wymaga poprawy lewej nogi"
 ]
 
-TEXTS = {
-    "Polski": {
-        "portal_name": "HÉRCULES DE ALICANTE C.F.",
-        "welcome_title": "DEPARTAMENT SKAUTINGU I ANALIZY",
-        "welcome_sub": "Oficjalna platforma analityczna Akademii i Pierwszego Zespołu",
-        "enter_btn": "WEJDŹ DO SYSTEMU SKAUTINGOWEGO",
-        "nav_1": "📋 Nowy Raport",
-        "nav_2": "🔍 Baza Zawodników",
-        "nav_3": "📊 Analiza Kadr",
-        "nav_4": "⚙️ Ustawienia",
-        "calc_btn": "⚙️ PRZELICZ SILNIK I WYGENERUJ KARTĘ ZAWODNIKA",
-        "save_db": "💾 Zapisz Kartę do Supabase"
-    },
-    "Español": {
-        "portal_name": "HÉRCULES DE ALICANTE C.F.",
-        "welcome_title": "DEPARTAMENTO DE SCOUTING Y ANALÍTICA",
-        "welcome_sub": "Plataforma oficial de análisis de la Academia y Primer Equipo",
-        "enter_btn": "ACCEDER AL SISTEMA DE SCOUTING",
-        "nav_1": "📋 Nuevo Informe",
-        "nav_2": "🔍 Base de Datos",
-        "nav_3": "📊 Análisis de Plantilla",
-        "nav_4": "⚙️ Ajustes",
-        "calc_btn": "⚙️ CALCULAR MOTOR Y GENERAR TARJETA",
-        "save_db": "💾 Guardar Tarjeta en Supabase"
-    }
-}
-
-# Inicjalizacja stanu
-if "entered" not in st.session_state:
-    st.session_state.entered = False
-if "lang" not in st.session_state:
-    st.session_state.lang = "Polski"
-
-# Supabase
+# Obsługa bazy Supabase
 supabase_client = None
 try:
     from supabase import create_client
@@ -224,123 +198,170 @@ try:
 except Exception:
     DB_OK = False
 
-# --- EKRAN POWITALNY (HERO LANDING PANEL Z HERBEM NA ŚRODKU) ---
+if "entered" not in st.session_state:
+    st.session_state.entered = False
+if "lang" not in st.session_state:
+    st.session_state.lang = "Polski"
+
+# --- EKRAN POWITALNY ---
 if not st.session_state.entered:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    
-    col_l1, col_l2, col_l3 = st.columns([1, 3, 1])
-    with col_l2:
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col2:
         st.markdown(f"""
         <div class="hero-container">
-            <img src="{HERCULES_LOGO_URL}" class="hero-logo" alt="Hércules CF Logo">
-            <div class="hero-heading">HÉRCULES DE ALICANTE C.F.</div>
-            <div class="hero-sub">DEPARTAMENT SKAUTINGU & AKADEMIA TALENTÓW</div>
-            <p style="color: #cbd5e1; font-size: 14px; margin-bottom: 25px;">
-                Oficjalny system analizy zawodników, dobierania profili taktycznych oraz ewaluacji potencjału.
+            <img src="{logo_src}" class="hero-logo">
+            <div style="color:#ffffff; font-size:32px; font-weight:900; letter-spacing:2px;">HÉRCULES DE ALICANTE C.F.</div>
+            <div style="color:#d4af37; font-size:15px; font-weight:700; margin-bottom:20px;">SISTEMA OFICIAL DE EVALUACIÓN DE TALENTO</div>
+            <p style="color:#cbd5e1; font-size:14px; margin-bottom:25px;">
+                Zaawansowany matematyczny silnik analityczny: ocena 4 filarów, wyliczanie wskaźników CR/PR/TI, automatyczny Tagging Engine oraz dopasowanie do ról taktycznych.
             </p>
         </div>
         """, unsafe_allow_html=True)
-        
-        c_btn1, c_btn2, c_btn3 = st.columns([1, 2, 1])
-        with c_btn2:
+        c1, c2, c3 = st.columns([1, 2, 1])
+        with c2:
             st.session_state.lang = st.selectbox("Idioma / Język", ["Polski", "Español"])
-            if st.button("⚡ WEJDŹ DO SYSTEMU", type="primary"):
+            if st.button("⚡ WEJDŹ DO PORTALU SKAUTINGOWEGO", type="primary"):
                 st.session_state.entered = True
                 st.rerun()
     st.stop()
 
-# --- GÓRNY PASEK KLUBOWY (TOP NAVIGATION PORTAL) ---
-t = TEXTS[st.session_state.lang]
-
+# --- HEADER PORTALU ---
 col_h1, col_h2 = st.columns([4, 1])
 with col_h1:
     st.markdown(f"""
-    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-        <img src="{HERCULES_LOGO_URL}" style="height: 50px;">
+    <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 20px;">
+        <img src="{logo_src}" style="height: 52px;">
         <div>
-            <h2 style="color: #ffffff; margin: 0; padding: 0; font-size: 22px; font-weight: 800;">{t['portal_name']}</h2>
-            <span style="color: #d4af37; font-size: 13px; font-weight: 600;">PORTAL SKAUTINGOWY & BAZA ANALITYCZNA</span>
+            <h2 style="color: #ffffff; margin: 0; padding: 0; font-size: 22px; font-weight: 900;">HÉRCULES DE ALICANTE C.F.</h2>
+            <span style="color: #d4af37; font-size: 13px; font-weight: 700;">SILNIK EVALUACYJNY & BAZA DANYCH AKADEMII</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 with col_h2:
-    st.session_state.lang = st.selectbox("Język / Lang", ["Polski", "Español"], label_visibility="collapsed")
+    st.session_state.lang = st.selectbox("Lang", ["Polski", "Español"], label_visibility="collapsed")
 
-# Zakładki jak na portalu informacyjnym
-tab_form, tab_db, tab_analytics, tab_settings = st.tabs([t["nav_1"], t["nav_2"], t["nav_3"], t["nav_4"]])
+tab_form, tab_db, tab_analytics, tab_settings = st.tabs(["📋 Formularz & Silnik Math", "🔍 Baza Zawodników", "📊 Analiza Taktyczna", "⚙️ Ustawienia"])
 
-# --- ZAKŁADKA 1: NOWY RAPORT (PORTAL FORM) ---
+# --- ZAKŁADKA 1: FORMULARZ & SILNIK ---
 with tab_form:
     st.markdown('<div class="content-card">', unsafe_allow_html=True)
-    st.subheader("📋 Formularz Oceny Zawodnika & Silnik Dopasowania")
-    st.write("Wpisz dane zawodnika, wybierz pozycję i oceń dedykowany pakiet umiejętności w skali **1.0 - 10.0**.")
+    st.subheader("📋 Ocena Zawodnika & Pełny Silnik Analityczny")
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
+    c1, c2, c3 = st.columns(3)
+    with c1:
         fname = st.text_input("Imię zawodnika", "Jan")
         lname = st.text_input("Nazwisko zawodnika", "Kowalski")
-    with col2:
-        position = st.selectbox("Pozycja Na Boisku", list(POSITION_ENGINE.keys()))
+    with c2:
+        position = st.selectbox("Pozycja Na Boisku", list(POSITION_FULL_ENGINE.keys()))
         club = st.text_input("Obecny Klub", "Akademia Hercules")
-    with col3:
+    with c3:
         birth_year = st.number_input("Rocznik", 2000, 2016, 2008)
         foot = st.selectbox("Noga dominująca", ["Prawa", "Lewa", "Obustronny"])
 
     st.markdown("---")
-    st.markdown("### 🎯 Ocena Umiejętności Pozycyjnych (1.0 - 10.0)")
+    st.markdown("### ⚙️ Ewaluacja 4 Filarów (Skala 1.0 - 10.0)")
 
-    pos_data = POSITION_ENGINE[position]
-    skills_list = pos_data["skills"]
-    profiles_dict = pos_data["profiles"]
+    pos_config = POSITION_FULL_ENGINE[position]
+    pillars = pos_config["pillars"]
+    profiles = pos_config["profiles"]
 
-    user_scores = {}
-    cols_skills = st.columns(3)
-    for idx, skill in enumerate(skills_list):
-        with cols_skills[idx % 3]:
-            user_scores[skill] = st.slider(f"{skill}", 1.0, 10.0, 7.0, 0.5)
+    skill_scores = {}
+    pillar_averages = {}
+
+    # Generowanie interfejsu 4 filarów
+    p_cols = st.columns(2)
+    p_idx = 0
+    for pillar_name, skills in pillars.items():
+        with p_cols[p_idx % 2]:
+            st.markdown(f"#### {pillar_name}")
+            p_sum = 0.0
+            for skill in skills:
+                val = st.slider(f"{skill}", 1.0, 10.0, 7.0, 0.5, key=f"{position}_{skill}")
+                skill_scores[skill] = val
+                p_sum += val
+            pillar_averages[pillar_name] = p_sum / len(skills)
+        p_idx += 1
 
     st.markdown("---")
-    selected_badges = st.multiselect("📌 Przypinki i Cechy (Tagi):", AVAILABLE_BADGES, default=[AVAILABLE_BADGES[0], AVAILABLE_BADGES[2]])
-    scout_notes = st.text_area("📝 Opinia i Rekomendacja Skauta:", "Zawodnika cechuje duża powtarzalność i opór na pressing w fazie budowania.")
+    manual_tags = st.multiselect("📌 Ręczne Przypinki / Tagi Skauta:", TAGS_MANUAL, default=[TAGS_MANUAL[0]])
+    scout_notes = st.text_area("📝 Rekomendacja i Podsumowanie Skauta:", "Dobre profilowanie, duży opór pod presją. Rekomendowany do dalszej obserwacji.")
 
-    # Obliczenia silnika
-    avg_score = sum(user_scores.values()) / len(user_scores)
-    cr = round(avg_score * 10, 1)
-    pr = round(min(99.0, cr * 1.15), 1)
-    index_ti = round(avg_score * 9.5, 1)
+    # --- MATEMATYCZNE PRZELICZENIA SILNIKA ---
+    te_avg = pillar_averages["Technika (TE)"]
+    ta_avg = pillar_averages["Taktyka (TA)"]
+    mo_avg = pillar_averages["Motoryka (MO)"]
+    me_avg = pillar_averages["Mentalność (ME)"]
 
-    profile_matches = {}
-    for prof_name, weights in profiles_dict.items():
-        match_val = sum(user_scores[skill_name] * weight for skill_name, weight in weights.items())
-        profile_matches[prof_name] = round((match_val / 10.0) * 100, 1)
+    # Wyliczanie Wskaźników
+    cr = round((te_avg * 0.30 + ta_avg * 0.30 + mo_avg * 0.25 + me_avg * 0.15) * 10, 1)
+    
+    # Wyliczanie Potencjału na podstawie rocznika
+    current_year = datetime.now().year
+    age = current_year - birth_year
+    growth_headroom = max(5.0, (23 - age) * 2.2) if age < 23 else 3.0
+    pr = round(min(99.0, cr + growth_headroom), 1)
+    dps = round(pr - cr, 1)
 
-    best_profile = max(profile_matches, key=profile_matches.get)
+    # Index TI (Taktyczny)
+    index_ti = round((ta_avg * 0.45 + te_avg * 0.35 + me_avg * 0.20) * 10, 1)
 
-    if st.button(t["calc_btn"], type="primary"):
+    # TAGGING ENGINE (Automatyczne generowanie odznak z progów punktowych)
+    auto_badges = []
+    for skill_k, val_v in skill_scores.items():
+        if val_v >= 8.5:
+            if "Szybkość" in skill_k or "Przyspieszenie" in skill_k or "V-max" in skill_k:
+                auto_badges.append("⚡ Piorunujący Sprint")
+            elif "Podanie" in skill_k or "Kultura" in skill_k:
+                auto_badges.append("🎯 Reżyser Gry")
+            elif "Drybling" in skill_k or "Pojedynki 1v1" in skill_k:
+                auto_badges.append("🔥 MISTRZ 1v1")
+            elif "Powietrzu" in skill_k or "Główki" in skill_k:
+                auto_badges.append("🚀 Dominator Powietrzny")
+            elif "Wizja" in skill_k or "Przegląd" in skill_k:
+                auto_badges.append("👁️ Radar Taktyczny")
+            elif "Refleks" in skill_k:
+                auto_badges.append("🧤 Kot na Linii")
+
+    # DOPASOWANIE ROLES / PROFILI TAKTYCZNYCH
+    role_matches = {}
+    for prof_name, weights in profiles.items():
+        match_score = sum(skill_scores.get(sk, 5.0) * w for sk, w in weights.items())
+        role_matches[prof_name] = round((match_score / 10.0) * 100, 1)
+
+    sorted_roles = sorted(role_matches.items(), key=lambda x: x[1], reverse=True)
+    best_role_name, best_role_pct = sorted_roles[0]
+
+    if st.button("⚙️ URUCHOM SILNIK I WYGENERUJKARTĘ ZAWODNIKA", type="primary"):
         st.markdown(f"""
         <div class="player-card-result">
-            <h2 style="color: #60a5fa; margin-top:0;">🃏 {fname} {lname} ({birth_year})</h2>
-            <p style="color: #cbd5e1;">Klub: <b>{club}</b> | Pozycja: <b>{position}</b> | Noga: <b>{foot}</b></p>
+            <div style="display:flex; justify-shadow:space-between; align-items:center;">
+                <div>
+                    <h2 style="color: #60a5fa; margin:0;">🃏 {fname} {lname} ({birth_year})</h2>
+                    <p style="color: #94a3b8; margin-top:4px;">Klub: <b>{club}</b> | Pozycja: <b>{position}</b> | Noga: <b>{foot}</b></p>
+                </div>
+            </div>
             <hr style="border-color: #1e3a8a;">
-            <p style="font-size: 18px; color: #f8fafc;">Główny Profil Taktyczny: <b style="color: #34d399;">{best_profile} ({profile_matches[best_profile]}% dopasowania)</b></p>
+            <p style="font-size:18px; color:#ffffff;">Najlepszy Profil Taktyczny: <b style="color:#34d399;">{best_role_name} ({best_role_pct}% Dopasowania)</b></p>
         </div>
         """, unsafe_allow_html=True)
 
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Current Rating (CR)", f"{cr}")
         m2.metric("Potential Rating (PR)", f"{pr}")
-        m3.metric("Index TI", f"{index_ti}")
-        m4.metric("Dopasowanie Profilu", f"{profile_matches[best_profile]}%")
+        m3.metric("DPS (Dynamika)", f"+{dps}")
+        m4.metric("Index TI (Taktyka)", f"{index_ti}")
 
-        st.markdown("**Wybrane przypinki:**")
-        badges_html = "".join([f'<span class="badge-tag">{b}</span>' for b in selected_badges])
-        st.markdown(badges_html, unsafe_allow_html=True)
+        st.markdown("#### 📌 Wygenerowane Odznaki & Przypinki:")
+        badges_html = "".join([f'<span class="badge-auto">{b}</span>' for b in set(auto_badges)])
+        badges_html += "".join([f'<span class="badge-manual">{b}</span>' for b in manual_tags])
+        st.markdown(badges_html if badges_html else "Brak odznak specjalnych", unsafe_allow_html=True)
 
-        # Wykres Radarowy
+        # Wykres Radarowy 4 Filarów
         fig = go.Figure()
         fig.add_trace(go.Scatterpolar(
-            r=list(user_scores.values()) + [list(user_scores.values())[0]],
-            theta=list(user_scores.keys()) + [list(user_scores.keys())[0]],
+            r=[te_avg, ta_avg, mo_avg, me_avg, te_avg],
+            theta=['Technika', 'Taktyka', 'Motoryka', 'Mentalność', 'Technika'],
             fill='toself',
             name=f"{fname} {lname}",
             line_color='#0055ff'
@@ -354,7 +375,7 @@ with tab_form:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        if st.button(t["save_db"]):
+        if st.button("💾 Zapisz Wygenerowany Profil do Supabase"):
             payload = {
                 "first_name": fname,
                 "last_name": lname,
@@ -363,17 +384,17 @@ with tab_form:
                 "position": position,
                 "cr": cr,
                 "pr": pr,
-                "notes": f"[{best_profile}] Przypinki: {', '.join(selected_badges)} | Uwagi: {scout_notes}",
+                "notes": f"[{best_role_name} {best_role_pct}%] TI: {index_ti} | Tagi: {', '.join(auto_badges + manual_tags)} | {scout_notes}",
                 "created_at": datetime.now().isoformat()
             }
             if DB_OK and supabase_client:
                 try:
                     supabase_client.table("scouting_reports").insert(payload).execute()
-                    st.success("Karta zawodnika pomyślnie zapisana w bazie Supabase!")
+                    st.success("Raport pomyślnie utrwalony w bazie danych Supabase!")
                 except Exception as ex:
                     st.error(f"Błąd zapisu: {ex}")
             else:
-                st.info("Karta wygenerowana i gotowa do zapisu.")
+                st.info("Zapisano w trybie symulacji lokalnej.")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- ZAKŁADKA 2: BAZA ZAWODNIKÓW ---
@@ -391,20 +412,20 @@ with tab_db:
 
     if df.empty:
         df = pd.DataFrame([
-            {"first_name": "Pablo", "last_name": "Torres", "birth_year": 2008, "club": "Hércules U19", "position": "CB - Środkowy Obrońca", "cr": 72.0, "pr": 86.5, "notes": "[Ball-Playing Defender] Przypinki: ⚡ Szybki, 🧠 Lider"},
-            {"first_name": "Adrian", "last_name": "Gomez", "birth_year": 2009, "club": "Elche CF", "position": "W - Skrzydłowy", "cr": 75.5, "pr": 89.0, "notes": "[Inverted Winger] Przypinki: 🛡️ Twardy w 1v1"}
+            {"first_name": "Pablo", "last_name": "Torres", "birth_year": 2008, "club": "Hércules U19", "position": "CB - Środkowy Obrońca", "cr": 72.0, "pr": 86.5, "notes": "[Ball-Playing Defender 88%] Tagi: ⚡ Piorunujący Sprint, 🧠 Lider"},
+            {"first_name": "Adrian", "last_name": "Gomez", "birth_year": 2009, "club": "Elche CF", "position": "W - Skrzydłowy", "cr": 75.5, "pr": 89.0, "notes": "[Inverted Winger 92%] Tagi: 🔥 MISTRZ 1v1"}
         ])
 
     st.dataframe(df, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- ZAKŁADKA 3: ANALIZA ---
+# --- ZAKŁADKA 3: ANALIZA TAKTYCZNA ---
 with tab_analytics:
     st.markdown('<div class="content-card">', unsafe_allow_html=True)
-    st.subheader("📊 Analiza Kadr i Rozkład Profili Taktycznych")
+    st.subheader("📊 Analityka Zespołowa & Rozkład Profili")
     c_a, c_b = st.columns(2)
     with c_a:
-        fig_pie = px.pie(names=['Ball-Playing Defender', 'Box-to-Box', 'Inverted Winger', 'Target Man'], values=[30, 35, 20, 15], title="Rozkład Dopasowania Profili Taktycznych")
+        fig_pie = px.pie(names=['Ball-Playing Defender', 'Box-to-Box', 'Inverted Winger', 'Target Man'], values=[30, 35, 20, 15], title="Dominujące Profile Taktyczne")
         st.plotly_chart(fig_pie, use_container_width=True)
     with c_b:
         fig_bar = px.bar(x=['2007', '2008', '2009', '2010'], y=[85.0, 82.1, 79.4, 77.0], title="Średni Potencjał PR w Rocznikach Akademickich")
@@ -417,7 +438,7 @@ with tab_settings:
     st.subheader("⚙️ Status Portalu Skautingowego")
     st.json({
         "Club": "Hércules de Alicante C.F.",
-        "System": "Portal Skautingowy & Baza Danych 2.0",
-        "Supabase Database": "Connected" if DB_OK else "Offline"
+        "Engine Version": "4-Pillar Mathematical Matrix 2.0",
+        "Database Status": "Connected" if DB_OK else "Offline"
     })
     st.markdown('</div>', unsafe_allow_html=True)
